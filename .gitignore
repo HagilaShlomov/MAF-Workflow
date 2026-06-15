@@ -1,0 +1,15 @@
+## .NET build artifacts
+bin/
+obj/
+
+## User-specific files
+*.user
+*.suo
+
+## Rider / VS Code
+.idea/
+.vs/
+
+## Local secrets - never commit real Azure OpenAI credentials
+appsettings.*.local.json
+*.local.json
