@@ -10,7 +10,7 @@ processed as a refund, or escalated to a human reviewer via a
 
 ## Architecture
 
-Clean separation of concerns:
+Clean separation of concerns, following [AGENTS.md](AGENTS.md) §3:
 
 ```
 src/TicketTriage.Workflow/
@@ -58,16 +58,16 @@ flowchart TD
     SendReply --> OUT
     HumanDecision --> OUT
 
-    classDef agent fill:#e0d4f7,stroke:#7a4fc9,color:#000;
-    classDef code fill:#d4f0d4,stroke:#4f9c4f,color:#000;
-    classDef port fill:#fde8c8,stroke:#d99a3f,color:#000;
-    classDef io fill:#f0f0f0,stroke:#999,color:#000;
+    classDef agent fill:#e0d4f7,stroke:#7a4fc9;
+    classDef code fill:#d4f0d4,stroke:#4f9c4f;
+    classDef port fill:#fde8c8,stroke:#d99a3f;
+    classDef io fill:#f0f0f0,stroke:#999;
 
     class Preprocess,Router,Refund,SendReply,HumanDecision code;
     class Classifier,DraftReply agent;
     class HumanPort port;
     class IN,OUT io;
-
+    
     linkStyle default color:#000;
 ```
 
