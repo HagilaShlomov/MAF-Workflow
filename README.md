@@ -10,8 +10,6 @@ processed as a refund, or escalated to a human reviewer via a
 
 ## Architecture
 
-Clean separation of concerns, following [AGENTS.md](AGENTS.md) §3:
-
 ```
 src/TicketTriage.Workflow/
 ├── Domain/
