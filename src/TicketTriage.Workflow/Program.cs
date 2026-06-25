@@ -148,7 +148,13 @@ foreach (var ticket in sampleTickets)
                 break;
 
             case WorkflowOutputEvent output:
-                Console.WriteLine($"  -> output             : {output.As<WorkflowOutcome>()}");
+                var workflowOutcome = output.As<WorkflowOutcome>();
+                Console.WriteLine($"  -> output             : {workflowOutcome}");
+                await AuditLogger.LogAsync(
+                    ticket,
+                    null,
+                    workflowOutcome?.Route.ToString() ?? "unknown",
+                    workflowOutcome?.Summary ?? "unknown");
                 break;
 
             case WorkflowErrorEvent error:
