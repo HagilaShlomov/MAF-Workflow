@@ -117,11 +117,78 @@ streaming `executor_invoked` / `executor_completed` / `request_info` / `output`
 events to the console. For the HumanReview route, the program simulates a
 reviewer approving the escalation via `SendResponseAsync`.
 
-## Testing
-
+## Running with Docker
+ 
+Copy the example env file and fill in your API key:
+ 
 ```bash
-dotnet test tests/TicketTriage.Workflow.Tests
+cp .env.example .env
+# Edit .env with your real API key
+```
+ 
+Then run with one command:
+ 
+```bash
+docker-compose up
 ```
 
+## Testing
+ 
+```bash
+dotnet test --filter "Category!=Integration"
+```
+ 
 Covers `RouterExecutor.DetermineRoute` routing rules and
 `TicketClassificationValidator` (including malformed/incomplete classifier output).
+ 
+To run the full eval suite (requires a live API key):
+ 
+```bash
+dotnet test --filter "Category=Integration"
+```
+ 
+## Example Output
+ 
+Input ticket:
+```
+Customer: David Kim
+Subject: Can't log into my account
+Body: I've tried resetting my password three times today and the reset
+email never arrives. I need access today to finish payroll for my team.
+```
+ 
+Output:
+```
+[executor_invoked] PreprocessExecutor
+[executor_completed] PreprocessExecutor
+[executor_invoked] ClassifierExecutor
+[executor_completed] ClassifierExecutor → Category=AccountAccess, Urgency=High
+[executor_invoked] RouterExecutor → Route=AutoReply
+[executor_invoked] DraftReplyExecutor
+[executor_completed] DraftReplyExecutor
+[output] WorkflowOutcome: AutoReply sent
+```
+ 
+## Quality Gates
+ 
+| Gate | Tool | Command | Status |
+|------|------|---------|--------|
+| Build | dotnet build | `dotnet build` | ✅ |
+| Unit tests | xUnit | `dotnet test --filter "Category!=Integration"` | ✅ 17 passing |
+| Eval tests (LLM) | xUnit | `dotnet test --filter "Category=Integration"` | ✅ 5 scenarios |
+| CI | GitHub Actions | on every push to main | ✅ |
+ 
+## Known Limitations
+ 
+- **No persistence** — tickets and outcomes are in-memory only, nothing is saved to a database.
+- **Eval tests are non-deterministic** — LLM responses vary, so eval tests may occasionally fail on edge cases.
+- **Single ticket at a time** — the workflow processes one ticket per run, no batch support yet.
+- **Simulated side effects** — refund processing and email sending are logged to console, not connected to real systems.
+## What I Would Improve Next
+ 
+- Add CSV/stdin input so real ticket files can be processed in batch.
+- Persist audit log to a file or database for production use.
+- Add deterministic red-flag rules (regex/keywords) before the LLM call for faster critical routing.
+- Connect to a real email sender and refund API.
+- Add confidence-based routing — if LLM confidence is Low, escalate to human automatically.
+ 
