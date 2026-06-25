@@ -8,6 +8,13 @@ pick a route, and the ticket is then either auto-replied (LLM-drafted),
 processed as a refund, or escalated to a human reviewer via a
 `request_info` human-in-the-loop port.
 
+## Why Does This Project Exist
+ 
+Support teams waste time manually reading and routing tickets to the right
+handler. This project demonstrates how an LLM-powered workflow can automate
+that triage — classifying tickets by category and urgency, applying
+deterministic business rules, and escalating edge cases to a human reviewer —
+while keeping the LLM out of routing decisions entirely.
 
 ## Architecture
 
@@ -32,6 +39,19 @@ tests/TicketTriage.Workflow.Tests/
 - **Agents** are single-purpose, structured-output (`ChatResponseFormat.ForJsonSchema`) `ChatClientAgent`s.
 - **Workflow/Executors** wrap agents or plain code as `ReflectingExecutor<TSelf>` + `IMessageHandler<TIn, TOut>` nodes.
 - **Infrastructure** centralizes the `IChatClient` configuration (provider-agnostic OpenAI-compatible endpoint — works with Groq, Azure OpenAI, GitHub Models, etc.).
+
+## Tech Stack
+ 
+| Layer | Technology |
+|-------|-----------|
+| Language | C# / .NET 8 |
+| Agent Framework | Microsoft Agent Framework (MAF) 1.10.0 |
+| LLM Integration | Microsoft.Extensions.AI + OpenAI SDK |
+| LLM Provider | Any OpenAI-compatible endpoint (Groq, Azure OpenAI, GitHub Models) |
+| Structured Output | `ChatResponseFormat.ForJsonSchema` |
+| Testing | xUnit |
+| CI | GitHub Actions |
+| Containerization | Docker + docker-compose |
 
 ## Workflow diagram
 
@@ -87,6 +107,14 @@ flowchart TD
 3. `Confidence == Low` → **HumanReview**
 4. else `Category == Refund` → **Refund**
 5. else → **AutoReply** (draft + send)
+
+## Engineering Decisions
+ 
+- **Classifier proposes, router decides** — the LLM only classifies (category, urgency, confidence). All routing logic lives in plain C# (`RouterExecutor.DetermineRoute`), making it testable and auditable without touching the LLM.
+- **Structured output over free text** — the classifier returns a typed JSON schema, eliminating fragile string parsing.
+- **Red-flag detection before the LLM** — obvious critical keywords (e.g. "hacked", "urgent") are caught deterministically in `PreprocessExecutor` before any LLM call, for speed and safety.
+- **Domain has zero LLM dependencies** — all models and enums in `Domain/` are plain C# records, so they can be unit tested without mocking agents or running the workflow.
+- **Audit log on every run** — every ticket's classification and route is written to `audit.jsonl` for traceability.
 
 ## Configuration
 
