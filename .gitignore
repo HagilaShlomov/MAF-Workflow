@@ -13,3 +13,6 @@ obj/
 ## Local secrets - never commit real Azure OpenAI credentials
 appsettings.*.local.json
 *.local.json
+
+## Docker environment variables - never commit real API keys
+.env

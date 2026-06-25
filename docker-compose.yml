@@ -1,0 +1,7 @@
+services:
+  maf-workflow:
+    build: .
+    environment:
+      - ChatModel__Endpoint=${CHATMODEL_ENDPOINT}
+      - ChatModel__ApiKey=${CHATMODEL_APIKEY}
+      - ChatModel__ModelId=${CHATMODEL_MODELID}
