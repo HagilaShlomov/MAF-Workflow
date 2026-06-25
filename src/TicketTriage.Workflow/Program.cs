@@ -81,28 +81,50 @@ var workflow = SupportTriageWorkflowFactory.Create(
 // the router - AutoReply, Refund, and HumanReview - so all conditional edges
 // and the human-in-the-loop escalation are exercised end-to-end.
 // ---------------------------------------------------------------------------
-var sampleTickets = new[]
+IncomingTicket[] sampleTickets;
+
+if (args.Length > 0 && File.Exists(args[0]))
 {
-    new IncomingTicket(
-        CustomerName: "Alice Nguyen",
-        Subject: "Can't log into my account",
-        Body: "I've been trying to log in for an hour and keep getting an " +
-              "'invalid password' error even after resetting it. My account " +
-              "email is alice@example.com."),
+    Console.WriteLine($"Reading tickets from {args[0]}...");
+    var lines = await File.ReadAllLinesAsync(args[0]);
+    sampleTickets = lines
+        .Skip(1) // skip header
+        .Where(l => !string.IsNullOrWhiteSpace(l))
+        .Select(line =>
+        {
+            var parts = line.Split(',', 3);
+            return new IncomingTicket(
+                CustomerName: parts[0].Trim('"'),
+                Subject: parts[1].Trim('"'),
+                Body: parts.Length > 2 ? parts[2].Trim('"') : string.Empty);
+        })
+        .ToArray();
+}
+else
+{
+    sampleTickets = new[]
+    {
+        new IncomingTicket(
+            CustomerName: "Alice Nguyen",
+            Subject: "Can't log into my account",
+            Body: "I've been trying to log in for an hour and keep getting an " +
+                  "'invalid password' error even after resetting it. My account " +
+                  "email is alice@example.com."),
 
-    new IncomingTicket(
-        CustomerName: "Ben Carter",
-        Subject: "Refund for order #48213",
-        Body: "I was charged twice for order #48213. Please refund the " +
-              "duplicate charge of $42.00 to my card."),
+        new IncomingTicket(
+            CustomerName: "Ben Carter",
+            Subject: "Refund for order #48213",
+            Body: "I was charged twice for order #48213. Please refund the " +
+                  "duplicate charge of $42.00 to my card."),
 
-    new IncomingTicket(
-        CustomerName: "Priya Shah",
-        Subject: "URGENT: production database is down",
-        Body: "Our production database has been down for 20 minutes and " +
-              "customers cannot check out. This is a critical outage - " +
-              "please escalate immediately."),
-};
+        new IncomingTicket(
+            CustomerName: "Priya Shah",
+            Subject: "URGENT: production database is down",
+            Body: "Our production database has been down for 20 minutes and " +
+                  "customers cannot check out. This is a critical outage - " +
+                  "please escalate immediately."),
+    };
+}
 
 foreach (var ticket in sampleTickets)
 {
