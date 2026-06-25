@@ -5,17 +5,6 @@ using TicketTriage.Workflow.Domain.Models;
 
 namespace TicketTriage.Workflow.Workflow.Executors;
 
-/// <summary>
-/// Third required executor. Pure code - applies the business rules that
-/// decide what happens to a classified ticket, encoding them explicitly
-/// (per AGENTS.md §7: "Use conditional / switch-case edges to encode
-/// business rules explicitly - don't hide routing logic inside agent
-/// prompts") rather than asking the classifier to also decide routing.
-///
-/// The <see cref="Microsoft.Agents.AI.Workflows.WorkflowBuilder"/> graph
-/// attaches its conditional edges to this executor's output, branching on
-/// <see cref="RoutedTicket.Route"/>.
-/// </summary>
 public sealed class RouterExecutor : ReflectingExecutor<RouterExecutor>, IMessageHandler<ClassifiedTicket, RoutedTicket>
 {
     private readonly ILogger<RouterExecutor> _logger;
@@ -27,7 +16,7 @@ public sealed class RouterExecutor : ReflectingExecutor<RouterExecutor>, IMessag
 
     public ValueTask<RoutedTicket> HandleAsync(ClassifiedTicket ticket, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
-        var route = DetermineRoute(ticket.Classification);
+        var route = DetermineRoute(ticket);
 
         _logger.LogInformation(
             "Routing ticket {TicketId} ({Category}/{Urgency}) to {Route}",
@@ -36,16 +25,16 @@ public sealed class RouterExecutor : ReflectingExecutor<RouterExecutor>, IMessag
         return ValueTask.FromResult(new RoutedTicket(ticket, route));
     }
 
-    /// <summary>
-    /// Pure routing decision, exposed as a static method so it can be unit
-    /// tested directly without constructing an executor or running the workflow.
-    ///
-    /// - Missing information or critical urgency always escalates to a human.
-    /// - Refund requests (with sufficient info) go to the deterministic refund flow.
-    /// - Everything else gets an automated drafted reply.
-    /// </summary>
-    public static TicketRoute DetermineRoute(TicketClassification classification)
+    public static TicketRoute DetermineRoute(ClassifiedTicket classifiedTicket)
     {
+        // Deterministic red-flag check — runs before any LLM-based rules
+        if (classifiedTicket.Ticket.IsRedFlag)
+        {
+            return TicketRoute.HumanReview;
+        }
+
+        var classification = classifiedTicket.Classification;
+
         if (classification.MissingInfo || classification.Urgency == TicketUrgency.Critical)
         {
             return TicketRoute.HumanReview;
@@ -56,12 +45,12 @@ public sealed class RouterExecutor : ReflectingExecutor<RouterExecutor>, IMessag
             return TicketRoute.Refund;
         }
 
-        if(classification.Category == TicketCategory.AccountAccess && classification.Severity == TicketSeverity.Critical)
+        if (classification.Category == TicketCategory.AccountAccess && classification.Severity == TicketSeverity.Critical)
         {
             return TicketRoute.HumanReview;
         }
 
-        if(classification.Confidence == TicketConfidence.Low)
+        if (classification.Confidence == TicketConfidence.Low)
         {
             return TicketRoute.HumanReview;
         }
