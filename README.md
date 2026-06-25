@@ -81,10 +81,12 @@ flowchart TD
 | 7 | `HumanDecisionExecutor` | code, terminal | `HumanReviewDecision` → `WorkflowOutcome` | Resolve outcome after human review |
 
 ### Routing rules (`RouterExecutor.DetermineRoute`)
-
-1. `MissingInfo == true` **or** `Urgency == Critical` → **HumanReview** (escalate via `request_info`)
-2. else `Category == Refund` → **Refund**
-3. else → **AutoReply** (draft + send)
+ 
+1. `IsRedFlag == true` → **HumanReview** (deterministic, before LLM)
+2. `MissingInfo == true` **or** `Urgency == Critical` → **HumanReview**
+3. `Confidence == Low` → **HumanReview**
+4. else `Category == Refund` → **Refund**
+5. else → **AutoReply** (draft + send)
 
 ## Configuration
 
@@ -108,14 +110,26 @@ Endpoint + ApiKey + ModelId.
 
 ## Running
 
+Run with the built-in sample tickets:
+ 
 ```bash
 dotnet run --project src/TicketTriage.Workflow
 ```
-
-This runs 3 sample tickets — one per route (AutoReply, Refund, HumanReview) —
-streaming `executor_invoked` / `executor_completed` / `request_info` / `output`
-events to the console. For the HumanReview route, the program simulates a
-reviewer approving the escalation via `SendResponseAsync`.
+ 
+Run with your own CSV file:
+ 
+```bash
+dotnet run --project src/TicketTriage.Workflow -- samples/tickets.csv
+```
+ 
+CSV format (see `samples/tickets.csv` for an example):
+```
+CustomerName,Subject,Body
+Alice Nguyen,Can't log into my account,"I've been trying to log in..."
+```
+ 
+This streams `executor_invoked` / `executor_completed` / `request_info` / `output`
+events to the console, and writes an audit log to `audit.jsonl`.
 
 ## Running with Docker
  
@@ -174,7 +188,7 @@ Output:
 | Gate | Tool | Command | Status |
 |------|------|---------|--------|
 | Build | dotnet build | `dotnet build` | ✅ |
-| Unit tests | xUnit | `dotnet test --filter "Category!=Integration"` | ✅ 17 passing |
+| Unit tests | xUnit | `dotnet test --filter "Category!=Integration"` | ✅ 18 passing |
 | Eval tests (LLM) | xUnit | `dotnet test --filter "Category=Integration"` | ✅ 5 scenarios |
 | CI | GitHub Actions | on every push to main | ✅ |
  
@@ -182,13 +196,13 @@ Output:
  
 - **No persistence** — tickets and outcomes are in-memory only, nothing is saved to a database.
 - **Eval tests are non-deterministic** — LLM responses vary, so eval tests may occasionally fail on edge cases.
-- **Single ticket at a time** — the workflow processes one ticket per run, no batch support yet.
 - **Simulated side effects** — refund processing and email sending are logged to console, not connected to real systems.
+- **CSV parser is basic** — does not handle all edge cases (e.g. commas inside quoted fields).
+
 ## What I Would Improve Next
  
-- Add CSV/stdin input so real ticket files can be processed in batch.
 - Persist audit log to a file or database for production use.
-- Add deterministic red-flag rules (regex/keywords) before the LLM call for faster critical routing.
 - Connect to a real email sender and refund API.
-- Add confidence-based routing — if LLM confidence is Low, escalate to human automatically.
+- Add a web API endpoint so tickets can be submitted via HTTP.
+- Improve CSV parsing to handle all RFC 4180 edge cases.
  
