@@ -1,3 +1,4 @@
+![CI](https://github.com/HagilaShlomov/MAF-Workflow/actions/workflows/ci.yml/badge.svg)
 # MAF Workflow — Support Ticket Triage
 
 A small Microsoft Agent Framework (MAF) workflow that triages incoming support
