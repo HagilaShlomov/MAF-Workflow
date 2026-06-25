@@ -27,6 +27,8 @@ public class TicketClassificationValidatorTests
             Category = TicketCategory.Technical,
             Urgency = TicketUrgency.Medium,
             MissingInfo = false,
+            Severity = TicketSeverity.Medium,
+            Confidence = TicketConfidence.Medium,
             Reasoning = "Customer reports a login error.",
         };
 
@@ -43,6 +45,8 @@ public class TicketClassificationValidatorTests
             Category = TicketCategory.General,
             Urgency = TicketUrgency.Low,
             MissingInfo = false,
+            Severity = TicketSeverity.Medium,
+            Confidence = TicketConfidence.Medium,
             Reasoning = "   ",
         };
 
@@ -59,6 +63,8 @@ public class TicketClassificationValidatorTests
             Category = (TicketCategory)999,
             Urgency = (TicketUrgency)999,
             MissingInfo = false,
+            Severity = TicketSeverity.Medium,
+            Confidence = TicketConfidence.Medium,
             Reasoning = "Customer reports a login error.",
         };
 
@@ -67,5 +73,25 @@ public class TicketClassificationValidatorTests
         Assert.Equal(2, errors.Count);
         Assert.Contains(errors, e => e.Contains("Category"));
         Assert.Contains(errors, e => e.Contains("Urgency"));
+    }
+
+    [Fact]
+    public void OutOfRangeSeverityAndConfidence_AreBothReportedAsErrors()
+    {
+        var classification = new TicketClassification
+        {
+            Category = TicketCategory.General,
+            Urgency = TicketUrgency.Medium,
+            MissingInfo = false,
+            Severity = (TicketSeverity)999,
+            Confidence = (TicketConfidence)999,
+            Reasoning = "Customer reports a login error.",
+        };
+
+        var errors = TicketClassificationValidator.Validate(classification);
+
+        Assert.Equal(2, errors.Count);
+        Assert.Contains(errors, e => e.Contains("Severity"));
+        Assert.Contains(errors, e => e.Contains("Confidence"));
     }
 }

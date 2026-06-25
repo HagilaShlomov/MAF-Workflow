@@ -39,6 +39,16 @@ public static class TicketClassificationValidator
             errors.Add("Reasoning must not be empty.");
         }
 
+        if (!Enum.IsDefined(typeof(TicketConfidence), classification.Confidence))
+        {
+            errors.Add($"Confidence value '{classification.Confidence}' is not a recognized confidence level.");
+        }
+
+        if (!Enum.IsDefined(typeof(TicketSeverity), classification.Severity))
+        {
+            errors.Add($"Severity value '{classification.Severity}' is not a recognized severity level.");
+        }
+
         return errors;
     }
 }

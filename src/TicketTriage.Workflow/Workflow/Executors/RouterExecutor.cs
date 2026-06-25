@@ -56,6 +56,16 @@ public sealed class RouterExecutor : ReflectingExecutor<RouterExecutor>, IMessag
             return TicketRoute.Refund;
         }
 
+        if(classification.Category == TicketCategory.AccountAccess && classification.Severity == TicketSeverity.Critical)
+        {
+            return TicketRoute.HumanReview;
+        }
+
+        if(classification.Confidence == TicketConfidence.Low)
+        {
+            return TicketRoute.HumanReview;
+        }
+
         return TicketRoute.AutoReply;
     }
 }

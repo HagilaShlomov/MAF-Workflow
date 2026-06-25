@@ -19,6 +19,14 @@ public sealed class TicketClassification
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public TicketUrgency Urgency { get; set; }
 
+    [JsonPropertyName("severity")]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public TicketSeverity Severity { get; set; }
+
+    [JsonPropertyName("confidence")]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public TicketConfidence Confidence { get; set; }
+
     [JsonPropertyName("missing_info")]
     public bool MissingInfo { get; set; }
 

@@ -7,6 +7,10 @@
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+
+    <!-- Same id as TicketTriage.Workflow, so eval tests resolve ChatModel:ApiKey
+         from the same user-secrets store the app already uses (AGENTS.md §3). -->
+    <UserSecretsId>03e30c10-388b-4968-a4b9-5dfb1267d9b8</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,6 +26,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\TicketTriage.Workflow\TicketTriage.Workflow.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
